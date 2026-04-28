@@ -1,0 +1,205 @@
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams, Link } from 'react-router-dom'
+import AdminRichTextEditor from '../components/AdminRichTextEditor'
+import { articleService } from '../services/dataService'
+
+const CATEGORIES = ['Teologia', 'Filosofia', 'Educação Clássica']
+
+export default function ArticleEditor() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const isEditing = !!id
+
+  const [form, setForm] = useState({
+    title: '',
+    author: 'Lucas Gomes',
+    category: 'Teologia',
+    date: '',
+    imageUrl: '',
+    content: '',
+    status: 'draft',
+  })
+  const [errors, setErrors] = useState({})
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    if (isEditing) {
+      const article = articleService.getById(Number(id))
+      if (article) {
+        setForm({
+          title: article.title || '',
+          author: article.author || 'Lucas Gomes',
+          category: article.category || 'Teologia',
+          date: article.date || '',
+          imageUrl: article.imageUrl || '',
+          content: article.content || '',
+          status: article.status || 'draft',
+        })
+      }
+    }
+  }, [id, isEditing])
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setForm((prev) => ({ ...prev, [name]: value }))
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }))
+    setSaved(false)
+  }
+
+  const handleContentChange = (html) => {
+    setForm((prev) => ({ ...prev, content: html }))
+    setSaved(false)
+  }
+
+  const validate = () => {
+    const errs = {}
+    if (!form.title.trim()) errs.title = 'O título é obrigatório.'
+    if (!form.author.trim()) errs.author = 'O autor é obrigatório.'
+    if (!form.content.replace(/<[^>]*>/g, '').trim()) errs.content = 'O conteúdo é obrigatório.'
+    return errs
+  }
+
+  const handleSave = (status) => {
+    const errs = validate()
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs)
+      return
+    }
+
+    const data = {
+      ...form,
+      status,
+      excerpt: form.content.replace(/<[^>]*>/g, '').substring(0, 200) + '...',
+    }
+
+    if (isEditing) {
+      articleService.update(Number(id), data)
+    } else {
+      articleService.create(data)
+    }
+
+    setSaved(true)
+    setTimeout(() => navigate('/admin/artigos'), 800)
+  }
+
+  return (
+    <div className="fade-in-up">
+      <div className="admin-page-header">
+        <Link to="/admin/artigos" className="back-link">← Voltar aos artigos</Link>
+        <h1>{isEditing ? 'Editar Artigo' : 'Novo Artigo'}</h1>
+      </div>
+
+      <div className="admin-editor-layout">
+        <div className="admin-editor-main">
+          <div className="admin-field">
+            <label htmlFor="article-title">Título</label>
+            <input
+              type="text"
+              id="article-title"
+              name="title"
+              value={form.title}
+              onChange={handleChange}
+              placeholder="Título do artigo"
+            />
+            {errors.title && <p className="form-error">{errors.title}</p>}
+          </div>
+
+          <div className="admin-field">
+            <label>Conteúdo</label>
+            <AdminRichTextEditor
+              initialContent={form.content}
+              onChange={handleContentChange}
+            />
+            {errors.content && <p className="form-error">{errors.content}</p>}
+          </div>
+        </div>
+
+        <div className="admin-editor-sidebar">
+          <div className="admin-sidebar-card">
+            <h3>Publicação</h3>
+            <div className="admin-field">
+              <label>Status atual</label>
+              <span className={`admin-badge ${form.status}`}>
+                {form.status === 'published' ? 'Publicado' : 'Rascunho'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.8rem' }}>
+              <button
+                type="button"
+                className="btn-classic"
+                onClick={() => handleSave('draft')}
+              >
+                Salvar como Rascunho
+              </button>
+              <button
+                type="button"
+                className="btn-classic-filled"
+                onClick={() => handleSave('published')}
+              >
+                {isEditing ? 'Atualizar e Publicar' : 'Publicar'}
+              </button>
+            </div>
+            {saved && (
+              <p style={{ color: 'var(--color-primary)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
+                ✓ Salvo com sucesso!
+              </p>
+            )}
+          </div>
+
+          <div className="admin-sidebar-card">
+            <h3>Detalhes</h3>
+            <div className="admin-field">
+              <label htmlFor="article-author">Autor</label>
+              <input
+                type="text"
+                id="article-author"
+                name="author"
+                value={form.author}
+                onChange={handleChange}
+              />
+              {errors.author && <p className="form-error">{errors.author}</p>}
+            </div>
+
+            <div className="admin-field">
+              <label htmlFor="article-category">Categoria</label>
+              <select
+                id="article-category"
+                name="category"
+                value={form.category}
+                onChange={handleChange}
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="admin-field">
+              <label htmlFor="article-date">Data</label>
+              <input
+                type="text"
+                id="article-date"
+                name="date"
+                value={form.date}
+                onChange={handleChange}
+                placeholder="Ex: 15 de abril de 2026"
+              />
+            </div>
+
+            <div className="admin-field">
+              <label htmlFor="article-image">Imagem de destaque (URL)</label>
+              <input
+                type="url"
+                id="article-image"
+                name="imageUrl"
+                value={form.imageUrl}
+                onChange={handleChange}
+                placeholder="https://..."
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
