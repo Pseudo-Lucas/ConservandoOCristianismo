@@ -5,22 +5,46 @@ import { articleService } from '../services/dataService'
 export default function ArticleListAdmin() {
   const [articles, setArticles] = useState([])
   const [filterStatus, setFilterStatus] = useState('all')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  useEffect(() => {
-    setArticles(articleService.getAll())
-  }, [])
-
-  const handleDelete = (id) => {
-    if (window.confirm('Tem certeza que deseja excluir este artigo?')) {
-      articleService.delete(id)
-      setArticles(articleService.getAll())
+  const refresh = async () => {
+    try {
+      setArticles(await articleService.getAll())
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleToggleStatus = (id, currentStatus) => {
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      refresh()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [])
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Tem certeza que deseja excluir este artigo?')) return
+
+    try {
+      await articleService.delete(id)
+      await refresh()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const handleToggleStatus = async (id, currentStatus) => {
     const newStatus = currentStatus === 'published' ? 'draft' : 'published'
-    articleService.update(id, { status: newStatus })
-    setArticles(articleService.getAll())
+    try {
+      await articleService.update(id, { status: newStatus })
+      await refresh()
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
   const filtered = filterStatus === 'all'
@@ -40,6 +64,8 @@ export default function ArticleListAdmin() {
           </Link>
         </div>
       </div>
+
+      {error && <p className="form-error">{error}</p>}
 
       <div className="category-filter" style={{ marginBottom: '1.5rem' }}>
         <button
@@ -62,7 +88,9 @@ export default function ArticleListAdmin() {
         </button>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <p style={{ color: 'var(--color-text-muted)' }}>Carregando artigos...</p>
+      ) : filtered.length === 0 ? (
         <p style={{ color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
           Nenhum artigo encontrado.
         </p>
@@ -71,11 +99,11 @@ export default function ArticleListAdmin() {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Título</th>
+                <th>Titulo</th>
                 <th>Categoria</th>
                 <th>Data</th>
                 <th>Status</th>
-                <th>Ações</th>
+                <th>Acoes</th>
               </tr>
             </thead>
             <tbody>

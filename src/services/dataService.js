@@ -1,43 +1,4 @@
-/**
- * Data Service
- * Handles CRUD operations using localStorage.
- * Structured for easy future migration to a real backend/API.
- */
-
-import articlesData from '../data/articles'
-import booksData from '../data/books'
-import downloadsData from '../data/downloads'
-
-const KEYS = {
-  articles: 'cc_articles',
-  books: 'cc_books',
-  downloads: 'cc_downloads',
-}
-
-// --- Initialization ---
-
-function initializeStore(key, defaultData) {
-  const stored = localStorage.getItem(key)
-  if (!stored) {
-    localStorage.setItem(key, JSON.stringify(defaultData))
-    return defaultData
-  }
-  return JSON.parse(stored)
-}
-
-function getAll(key) {
-  const data = localStorage.getItem(key)
-  return data ? JSON.parse(data) : []
-}
-
-function saveAll(key, data) {
-  localStorage.setItem(key, JSON.stringify(data))
-}
-
-function generateId(items) {
-  if (items.length === 0) return 1
-  return Math.max(...items.map((i) => i.id)) + 1
-}
+import { requireSupabase } from '../lib/supabaseClient'
 
 function generateSlug(title) {
   return title
@@ -50,164 +11,284 @@ function generateSlug(title) {
     .replace(/-+/g, '-')
 }
 
-// --- Articles ---
+function formatDate() {
+  return new Date().toLocaleDateString('pt-BR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+}
+
+function withoutUndefined(value) {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, item]) => item !== undefined)
+  )
+}
+
+function toCamelArticle(article) {
+  if (!article) return null
+  return {
+    id: article.id,
+    slug: article.slug,
+    title: article.title,
+    date: article.date,
+    author: article.author,
+    category: article.category,
+    excerpt: article.excerpt,
+    content: article.content,
+    status: article.status,
+    imageUrl: article.image_url || '',
+    createdAt: article.created_at,
+  }
+}
+
+function toSnakeArticle(article) {
+  return withoutUndefined({
+    title: article.title,
+    slug: article.slug,
+    date: article.date,
+    author: article.author,
+    category: article.category,
+    excerpt: article.excerpt,
+    content: article.content,
+    status: article.status,
+    image_url: article.imageUrl === undefined ? undefined : article.imageUrl || null,
+  })
+}
+
+function toCamelBook(book) {
+  if (!book) return null
+  return {
+    id: book.id,
+    title: book.title,
+    author: book.author,
+    description: book.description,
+    imageUrl: book.image_url || '',
+    externalLink: book.external_link || '',
+    createdAt: book.created_at,
+  }
+}
+
+function toSnakeBook(book) {
+  return withoutUndefined({
+    title: book.title,
+    author: book.author,
+    description: book.description,
+    image_url: book.imageUrl === undefined ? undefined : book.imageUrl || null,
+    external_link: book.externalLink === undefined ? undefined : book.externalLink || null,
+  })
+}
+
+function toCamelDownload(item) {
+  if (!item) return null
+  return {
+    id: item.id,
+    name: item.name,
+    description: item.description,
+    fileUrl: item.file_url || '',
+    category: item.category,
+    published: item.published,
+    createdAt: item.created_at,
+  }
+}
+
+function toSnakeDownload(item) {
+  return withoutUndefined({
+    name: item.name,
+    description: item.description,
+    file_url: item.fileUrl === undefined ? undefined : item.fileUrl || null,
+    category: item.category,
+    published: item.published,
+  })
+}
+
+function throwIfError(error) {
+  if (error) throw error
+}
 
 export const articleService = {
-  init() {
-    initializeStore(KEYS.articles, articlesData.map(a => ({
-      ...a,
-      status: 'published',
-      imageUrl: '',
-    })))
+  async getAll() {
+    const { data, error } = await requireSupabase()
+      .from('articles')
+      .select('*')
+      .order('created_at', { ascending: false })
+    throwIfError(error)
+    return data.map(toCamelArticle)
   },
 
-  getAll() {
-    return getAll(KEYS.articles)
+  async getPublished() {
+    const { data, error } = await requireSupabase()
+      .from('articles')
+      .select('*')
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
+    throwIfError(error)
+    return data.map(toCamelArticle)
   },
 
-  getPublished() {
-    return this.getAll().filter((a) => a.status === 'published')
+  async getById(id) {
+    const { data, error } = await requireSupabase()
+      .from('articles')
+      .select('*')
+      .eq('id', id)
+      .single()
+    throwIfError(error)
+    return toCamelArticle(data)
   },
 
-  getById(id) {
-    return this.getAll().find((a) => a.id === id)
+  async getBySlug(slug) {
+    const { data, error } = await requireSupabase()
+      .from('articles')
+      .select('*')
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .single()
+    if (error?.code === 'PGRST116') return null
+    throwIfError(error)
+    return toCamelArticle(data)
   },
 
-  getBySlug(slug) {
-    return this.getAll().find((a) => a.slug === slug && a.status === 'published')
-  },
-
-  create(article) {
-    const items = this.getAll()
-    const newArticle = {
+  async create(article) {
+    const payload = toSnakeArticle({
       ...article,
-      id: generateId(items),
       slug: generateSlug(article.title),
-      date: article.date || new Date().toLocaleDateString('pt-BR', {
-        day: 'numeric', month: 'long', year: 'numeric'
-      }),
-    }
-    items.unshift(newArticle)
-    saveAll(KEYS.articles, items)
-    return newArticle
+      date: article.date || formatDate(),
+    })
+    const { data, error } = await requireSupabase()
+      .from('articles')
+      .insert(payload)
+      .select()
+      .single()
+    throwIfError(error)
+    return toCamelArticle(data)
   },
 
-  update(id, updates) {
-    const items = this.getAll()
-    const index = items.findIndex((a) => a.id === id)
-    if (index === -1) return null
-    if (updates.title && updates.title !== items[index].title) {
-      updates.slug = generateSlug(updates.title)
-    }
-    items[index] = { ...items[index], ...updates }
-    saveAll(KEYS.articles, items)
-    return items[index]
+  async update(id, updates) {
+    const payload = { ...updates }
+    if (updates.title) payload.slug = generateSlug(updates.title)
+
+    const { data, error } = await requireSupabase()
+      .from('articles')
+      .update(toSnakeArticle(payload))
+      .eq('id', id)
+      .select()
+      .single()
+    throwIfError(error)
+    return toCamelArticle(data)
   },
 
-  delete(id) {
-    const items = this.getAll().filter((a) => a.id !== id)
-    saveAll(KEYS.articles, items)
+  async delete(id) {
+    const { error } = await requireSupabase()
+      .from('articles')
+      .delete()
+      .eq('id', id)
+    throwIfError(error)
   },
 }
-
-// --- Books ---
 
 export const bookService = {
-  init() {
-    initializeStore(KEYS.books, booksData.map(b => ({
-      ...b,
-      imageUrl: '',
-      externalLink: '',
-    })))
+  async getAll() {
+    const { data, error } = await requireSupabase()
+      .from('recommendations')
+      .select('*')
+      .order('created_at', { ascending: false })
+    throwIfError(error)
+    return data.map(toCamelBook)
   },
 
-  getAll() {
-    return getAll(KEYS.books)
+  async create(book) {
+    const { data, error } = await requireSupabase()
+      .from('recommendations')
+      .insert(toSnakeBook(book))
+      .select()
+      .single()
+    throwIfError(error)
+    return toCamelBook(data)
   },
 
-  getById(id) {
-    return this.getAll().find((b) => b.id === id)
+  async update(id, updates) {
+    const { data, error } = await requireSupabase()
+      .from('recommendations')
+      .update(toSnakeBook(updates))
+      .eq('id', id)
+      .select()
+      .single()
+    throwIfError(error)
+    return toCamelBook(data)
   },
 
-  create(book) {
-    const items = this.getAll()
-    const newBook = {
-      ...book,
-      id: generateId(items),
-    }
-    items.push(newBook)
-    saveAll(KEYS.books, items)
-    return newBook
-  },
-
-  update(id, updates) {
-    const items = this.getAll()
-    const index = items.findIndex((b) => b.id === id)
-    if (index === -1) return null
-    items[index] = { ...items[index], ...updates }
-    saveAll(KEYS.books, items)
-    return items[index]
-  },
-
-  delete(id) {
-    const items = this.getAll().filter((b) => b.id !== id)
-    saveAll(KEYS.books, items)
+  async delete(id) {
+    const { error } = await requireSupabase()
+      .from('recommendations')
+      .delete()
+      .eq('id', id)
+    throwIfError(error)
   },
 }
-
-// --- Downloads ---
 
 export const downloadService = {
-  init() {
-    initializeStore(KEYS.downloads, downloadsData.map(d => ({
-      ...d,
-      fileUrl: '',
-      category: 'Geral',
-      published: true,
-    })))
+  async getAll() {
+    const { data, error } = await requireSupabase()
+      .from('downloads')
+      .select('*')
+      .order('created_at', { ascending: false })
+    throwIfError(error)
+    return data.map(toCamelDownload)
   },
 
-  getAll() {
-    return getAll(KEYS.downloads)
+  async getPublished() {
+    const { data, error } = await requireSupabase()
+      .from('downloads')
+      .select('*')
+      .eq('published', true)
+      .order('created_at', { ascending: false })
+    throwIfError(error)
+    return data.map(toCamelDownload)
   },
 
-  getPublished() {
-    return this.getAll().filter((d) => d.published)
+  async create(item) {
+    const { data, error } = await requireSupabase()
+      .from('downloads')
+      .insert(toSnakeDownload(item))
+      .select()
+      .single()
+    throwIfError(error)
+    return toCamelDownload(data)
   },
 
-  getById(id) {
-    return this.getAll().find((d) => d.id === id)
+  async update(id, updates) {
+    const { data, error } = await requireSupabase()
+      .from('downloads')
+      .update(toSnakeDownload(updates))
+      .eq('id', id)
+      .select()
+      .single()
+    throwIfError(error)
+    return toCamelDownload(data)
   },
 
-  create(item) {
-    const items = this.getAll()
-    const newItem = {
-      ...item,
-      id: generateId(items),
-    }
-    items.push(newItem)
-    saveAll(KEYS.downloads, items)
-    return newItem
-  },
-
-  update(id, updates) {
-    const items = this.getAll()
-    const index = items.findIndex((d) => d.id === id)
-    if (index === -1) return null
-    items[index] = { ...items[index], ...updates }
-    saveAll(KEYS.downloads, items)
-    return items[index]
-  },
-
-  delete(id) {
-    const items = this.getAll().filter((d) => d.id !== id)
-    saveAll(KEYS.downloads, items)
+  async delete(id) {
+    const { error } = await requireSupabase()
+      .from('downloads')
+      .delete()
+      .eq('id', id)
+    throwIfError(error)
   },
 }
 
-// --- Initialize all stores ---
-export function initializeDataStores() {
-  articleService.init()
-  bookService.init()
-  downloadService.init()
+export const contactService = {
+  async create(message) {
+    const { data, error } = await requireSupabase()
+      .from('contact_messages')
+      .insert({
+        name: message.name,
+        email: message.email,
+        subject: message.subject,
+        message: message.message,
+      })
+      .select()
+      .single()
+    throwIfError(error)
+    return data
+  },
 }

@@ -1,6 +1,11 @@
 export default function DownloadCard({ item }) {
   const handleDownload = () => {
-    alert(`O download de "${item.name}" será disponibilizado em breve.`)
+    if (item.fileUrl) {
+      window.open(item.fileUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
+
+    alert(`O download de "${item.name}" sera disponibilizado em breve.`)
   }
 
   return (

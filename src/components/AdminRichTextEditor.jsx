@@ -5,17 +5,17 @@ export default function AdminRichTextEditor({ initialContent = '', onChange }) {
   const [showPreview, setShowPreview] = useState(false)
   const [previewHtml, setPreviewHtml] = useState('')
 
+  const triggerChange = useCallback(() => {
+    if (onChange && editorRef.current) {
+      onChange(editorRef.current.innerHTML)
+    }
+  }, [onChange])
+
   const execCmd = useCallback((command, value = null) => {
     document.execCommand(command, false, value)
     editorRef.current?.focus()
     triggerChange()
-  }, [])
-
-  const triggerChange = () => {
-    if (onChange && editorRef.current) {
-      onChange(editorRef.current.innerHTML)
-    }
-  }
+  }, [triggerChange])
 
   const handleInsertLink = () => {
     const url = prompt('URL do link:')

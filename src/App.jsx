@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { AuthProvider } from './contexts/AuthContext'
-import { initializeDataStores } from './services/dataService'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -24,9 +23,6 @@ import ArticleListAdmin from './pages/ArticleListAdmin'
 import ArticleEditor from './pages/ArticleEditor'
 import RecommendationEditor from './pages/RecommendationEditor'
 import DownloadManager from './pages/DownloadManager'
-
-// Initialize data stores on app load
-initializeDataStores()
 
 function ScrollToTop() {
   const { pathname } = useLocation()

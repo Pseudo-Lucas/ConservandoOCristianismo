@@ -5,16 +5,30 @@ const emptyBook = { title: '', author: '', description: '', imageUrl: '', extern
 
 export default function RecommendationEditor() {
   const [books, setBooks] = useState([])
-  const [editing, setEditing] = useState(null) // null = list view, object = form
+  const [editing, setEditing] = useState(null)
   const [form, setForm] = useState({ ...emptyBook })
   const [errors, setErrors] = useState({})
   const [saved, setSaved] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  const refresh = async () => {
+    try {
+      setBooks(await bookService.getAll())
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    setBooks(bookService.getAll())
-  }, [])
+    const timeoutId = window.setTimeout(() => {
+      refresh()
+    }, 0)
 
-  const refresh = () => setBooks(bookService.getAll())
+    return () => window.clearTimeout(timeoutId)
+  }, [])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -25,31 +39,36 @@ export default function RecommendationEditor() {
 
   const validate = () => {
     const errs = {}
-    if (!form.title.trim()) errs.title = 'O título é obrigatório.'
-    if (!form.author.trim()) errs.author = 'O autor é obrigatório.'
+    if (!form.title.trim()) errs.title = 'O titulo e obrigatorio.'
+    if (!form.author.trim()) errs.author = 'O autor e obrigatorio.'
     return errs
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const errs = validate()
     if (Object.keys(errs).length > 0) {
       setErrors(errs)
       return
     }
 
-    if (editing === 'new') {
-      bookService.create(form)
-    } else {
-      bookService.update(editing, form)
-    }
+    setError('')
+    try {
+      if (editing === 'new') {
+        await bookService.create(form)
+      } else {
+        await bookService.update(editing, form)
+      }
 
-    setSaved(true)
-    setTimeout(() => {
-      setEditing(null)
-      setForm({ ...emptyBook })
-      setSaved(false)
-      refresh()
-    }, 600)
+      setSaved(true)
+      setTimeout(async () => {
+        setEditing(null)
+        setForm({ ...emptyBook })
+        setSaved(false)
+        await refresh()
+      }, 600)
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
   const handleEdit = (book) => {
@@ -65,10 +84,14 @@ export default function RecommendationEditor() {
     setSaved(false)
   }
 
-  const handleDelete = (id) => {
-    if (window.confirm('Excluir esta recomendação?')) {
-      bookService.delete(id)
-      refresh()
+  const handleDelete = async (id) => {
+    if (!window.confirm('Excluir esta recomendacao?')) return
+
+    try {
+      await bookService.delete(id)
+      await refresh()
+    } catch (err) {
+      setError(err.message)
     }
   }
 
@@ -79,20 +102,21 @@ export default function RecommendationEditor() {
     setSaved(false)
   }
 
-  // --- Form view ---
   if (editing !== null) {
     return (
       <div className="fade-in-up">
         <div className="admin-page-header">
           <button className="back-link" onClick={handleCancel} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-            ← Voltar
+            Voltar
           </button>
-          <h1>{editing === 'new' ? 'Nova Recomendação' : 'Editar Recomendação'}</h1>
+          <h1>{editing === 'new' ? 'Nova Recomendacao' : 'Editar Recomendacao'}</h1>
         </div>
+
+        {error && <p className="form-error">{error}</p>}
 
         <div style={{ maxWidth: 600 }}>
           <div className="admin-field">
-            <label htmlFor="book-title">Título do livro</label>
+            <label htmlFor="book-title">Titulo do livro</label>
             <input type="text" id="book-title" name="title" value={form.title} onChange={handleChange} />
             {errors.title && <p className="form-error">{errors.title}</p>}
           </div>
@@ -104,7 +128,7 @@ export default function RecommendationEditor() {
           </div>
 
           <div className="admin-field">
-            <label htmlFor="book-description">Descrição</label>
+            <label htmlFor="book-description">Descricao</label>
             <textarea
               id="book-description"
               name="description"
@@ -144,7 +168,7 @@ export default function RecommendationEditor() {
           </div>
           {saved && (
             <p style={{ color: 'var(--color-primary)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-              ✓ Salvo com sucesso!
+              Salvo com sucesso!
             </p>
           )}
         </div>
@@ -152,33 +176,35 @@ export default function RecommendationEditor() {
     )
   }
 
-  // --- List view ---
   return (
     <div className="fade-in-up">
       <div className="admin-page-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1>Recomendações</h1>
-            <p>Gerencie as recomendações de leitura.</p>
+            <h1>Recomendacoes</h1>
+            <p>Gerencie as recomendacoes de leitura.</p>
           </div>
           <button className="btn-classic-filled" onClick={() => { setEditing('new'); setForm({ ...emptyBook }); }}>
-            Nova Recomendação
+            Nova Recomendacao
           </button>
         </div>
       </div>
 
-      {books.length === 0 ? (
+      {error && <p className="form-error">{error}</p>}
+      {loading ? (
+        <p style={{ color: 'var(--color-text-muted)' }}>Carregando recomendacoes...</p>
+      ) : books.length === 0 ? (
         <p style={{ color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-          Nenhuma recomendação cadastrada.
+          Nenhuma recomendacao cadastrada.
         </p>
       ) : (
         <div className="admin-table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Título</th>
+                <th>Titulo</th>
                 <th>Autor</th>
-                <th>Ações</th>
+                <th>Acoes</th>
               </tr>
             </thead>
             <tbody>

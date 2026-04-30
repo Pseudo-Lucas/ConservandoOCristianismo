@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import RichTextEditor from './RichTextEditor'
+import { contactService } from '../services/dataService'
 
 export default function ContactForm() {
   const editorRef = useRef(null)
@@ -10,6 +11,8 @@ export default function ContactForm() {
   })
   const [errors, setErrors] = useState({})
   const [submitted, setSubmitted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -17,23 +20,24 @@ export default function ContactForm() {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }))
     }
+    setSubmitError('')
   }
 
   const validate = () => {
     const newErrors = {}
-    if (!formData.name.trim()) newErrors.name = 'O campo nome é obrigatório.'
+    if (!formData.name.trim()) newErrors.name = 'O campo nome e obrigatorio.'
     if (!formData.email.trim()) {
-      newErrors.email = 'O campo e-mail é obrigatório.'
+      newErrors.email = 'O campo e-mail e obrigatorio.'
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Insira um e-mail válido.'
+      newErrors.email = 'Insira um e-mail valido.'
     }
-    if (!formData.subject.trim()) newErrors.subject = 'O campo assunto é obrigatório.'
+    if (!formData.subject.trim()) newErrors.subject = 'O campo assunto e obrigatorio.'
     const messageContent = editorRef.current?.innerHTML?.replace(/<[^>]*>/g, '').trim()
-    if (!messageContent) newErrors.message = 'O campo mensagem é obrigatório.'
+    if (!messageContent) newErrors.message = 'O campo mensagem e obrigatorio.'
     return newErrors
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const validationErrors = validate()
     if (Object.keys(validationErrors).length > 0) {
@@ -41,18 +45,24 @@ export default function ContactForm() {
       return
     }
 
-    // Prepare data for future integration (EmailJS, API, etc.)
     const payload = {
       ...formData,
       message: editorRef.current?.innerHTML || '',
     }
-    console.log('Form payload:', payload)
 
-    // Simulate success
-    setSubmitted(true)
-    setFormData({ name: '', email: '', subject: '' })
-    if (editorRef.current) editorRef.current.innerHTML = ''
-    setErrors({})
+    setSubmitting(true)
+    setSubmitError('')
+    try {
+      await contactService.create(payload)
+      setSubmitted(true)
+      setFormData({ name: '', email: '', subject: '' })
+      if (editorRef.current) editorRef.current.innerHTML = ''
+      setErrors({})
+    } catch (err) {
+      setSubmitError(err.message)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (submitted) {
@@ -61,7 +71,7 @@ export default function ContactForm() {
         <p style={{ marginBottom: 0 }}>
           <strong>Mensagem enviada com sucesso.</strong>
           <br />
-          Obrigado pelo contato. Responderei assim que possível.
+          Obrigado pelo contato. Responderei assim que possivel.
         </p>
       </div>
     )
@@ -113,8 +123,10 @@ export default function ContactForm() {
         {errors.message && <p className="form-error">{errors.message}</p>}
       </div>
 
-      <button type="submit" className="btn-classic-filled">
-        Enviar Mensagem
+      {submitError && <p className="form-error">{submitError}</p>}
+
+      <button type="submit" className="btn-classic-filled" disabled={submitting}>
+        {submitting ? 'Enviando...' : 'Enviar Mensagem'}
       </button>
     </form>
   )

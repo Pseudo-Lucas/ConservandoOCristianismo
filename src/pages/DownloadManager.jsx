@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { downloadService } from '../services/dataService'
 
-const CATEGORIES = ['Geral', 'Teologia', 'Filosofia', 'Educação Clássica', 'Patrística']
+const CATEGORIES = ['Geral', 'Teologia', 'Filosofia', 'Educacao Classica', 'Patristica']
 const emptyItem = { name: '', description: '', fileUrl: '', category: 'Geral', published: true }
 
 export default function DownloadManager() {
@@ -10,12 +10,26 @@ export default function DownloadManager() {
   const [form, setForm] = useState({ ...emptyItem })
   const [errors, setErrors] = useState({})
   const [saved, setSaved] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  const refresh = async () => {
+    try {
+      setItems(await downloadService.getAll())
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    setItems(downloadService.getAll())
-  }, [])
+    const timeoutId = window.setTimeout(() => {
+      refresh()
+    }, 0)
 
-  const refresh = () => setItems(downloadService.getAll())
+    return () => window.clearTimeout(timeoutId)
+  }, [])
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -26,31 +40,36 @@ export default function DownloadManager() {
 
   const validate = () => {
     const errs = {}
-    if (!form.name.trim()) errs.name = 'O nome é obrigatório.'
-    if (!form.description.trim()) errs.description = 'A descrição é obrigatória.'
+    if (!form.name.trim()) errs.name = 'O nome e obrigatorio.'
+    if (!form.description.trim()) errs.description = 'A descricao e obrigatoria.'
     return errs
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const errs = validate()
     if (Object.keys(errs).length > 0) {
       setErrors(errs)
       return
     }
 
-    if (editing === 'new') {
-      downloadService.create(form)
-    } else {
-      downloadService.update(editing, form)
-    }
+    setError('')
+    try {
+      if (editing === 'new') {
+        await downloadService.create(form)
+      } else {
+        await downloadService.update(editing, form)
+      }
 
-    setSaved(true)
-    setTimeout(() => {
-      setEditing(null)
-      setForm({ ...emptyItem })
-      setSaved(false)
-      refresh()
-    }, 600)
+      setSaved(true)
+      setTimeout(async () => {
+        setEditing(null)
+        setForm({ ...emptyItem })
+        setSaved(false)
+        await refresh()
+      }, 600)
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
   const handleEdit = (item) => {
@@ -66,10 +85,14 @@ export default function DownloadManager() {
     setSaved(false)
   }
 
-  const handleDelete = (id) => {
-    if (window.confirm('Excluir este download?')) {
-      downloadService.delete(id)
-      refresh()
+  const handleDelete = async (id) => {
+    if (!window.confirm('Excluir este download?')) return
+
+    try {
+      await downloadService.delete(id)
+      await refresh()
+    } catch (err) {
+      setError(err.message)
     }
   }
 
@@ -80,16 +103,17 @@ export default function DownloadManager() {
     setSaved(false)
   }
 
-  // --- Form view ---
   if (editing !== null) {
     return (
       <div className="fade-in-up">
         <div className="admin-page-header">
           <button className="back-link" onClick={handleCancel} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-            ← Voltar
+            Voltar
           </button>
           <h1>{editing === 'new' ? 'Novo Download' : 'Editar Download'}</h1>
         </div>
+
+        {error && <p className="form-error">{error}</p>}
 
         <div style={{ maxWidth: 600 }}>
           <div className="admin-field">
@@ -99,7 +123,7 @@ export default function DownloadManager() {
           </div>
 
           <div className="admin-field">
-            <label htmlFor="dl-description">Descrição</label>
+            <label htmlFor="dl-description">Descricao</label>
             <textarea
               id="dl-description"
               name="description"
@@ -144,7 +168,7 @@ export default function DownloadManager() {
               style={{ width: 'auto' }}
             />
             <label htmlFor="dl-published" style={{ margin: 0, textTransform: 'none', letterSpacing: 'normal', fontSize: '0.95rem' }}>
-              Publicado (visível para visitantes)
+              Publicado (visivel para visitantes)
             </label>
           </div>
 
@@ -158,7 +182,7 @@ export default function DownloadManager() {
           </div>
           {saved && (
             <p style={{ color: 'var(--color-primary)', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-              ✓ Salvo com sucesso!
+              Salvo com sucesso!
             </p>
           )}
         </div>
@@ -166,14 +190,13 @@ export default function DownloadManager() {
     )
   }
 
-  // --- List view ---
   return (
     <div className="fade-in-up">
       <div className="admin-page-header">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h1>Downloads</h1>
-            <p>Gerencie os materiais disponíveis para download.</p>
+            <p>Gerencie os materiais disponiveis para download.</p>
           </div>
           <button className="btn-classic-filled" onClick={() => { setEditing('new'); setForm({ ...emptyItem }); }}>
             Novo Download
@@ -181,7 +204,10 @@ export default function DownloadManager() {
         </div>
       </div>
 
-      {items.length === 0 ? (
+      {error && <p className="form-error">{error}</p>}
+      {loading ? (
+        <p style={{ color: 'var(--color-text-muted)' }}>Carregando downloads...</p>
+      ) : items.length === 0 ? (
         <p style={{ color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
           Nenhum download cadastrado.
         </p>
@@ -193,7 +219,7 @@ export default function DownloadManager() {
                 <th>Nome</th>
                 <th>Categoria</th>
                 <th>Status</th>
-                <th>Ações</th>
+                <th>Acoes</th>
               </tr>
             </thead>
             <tbody>
