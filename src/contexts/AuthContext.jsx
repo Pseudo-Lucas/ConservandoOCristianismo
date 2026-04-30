@@ -71,10 +71,18 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
+  const updatePassword = async (password) => {
+    const { error } = await requireSupabase().auth.updateUser({ password })
+
+    if (error) {
+      throw new Error(error.message)
+    }
+  }
+
   const isAuthenticated = !!user
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, updatePassword, isAuthenticated, loading }}>
       {children}
     </AuthContext.Provider>
   )

@@ -15,6 +15,7 @@ import ContactPage from './pages/ContactPage'
 
 // Auth
 import LoginPage from './pages/LoginPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 
 // Admin pages
 import AdminLayout from './pages/AdminLayout'
@@ -61,6 +62,7 @@ export default function App() {
         <Routes>
           {/* Login */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           {/* Admin (protected) */}
           <Route
