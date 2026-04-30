@@ -915,8 +915,15 @@ img {
 .admin-main {
   flex: 1;
   margin-left: 240px;
-  padding: 2rem 2.5rem;
-  max-width: 1000px;
+  width: calc(100% - 240px);
+  max-width: none;
+  padding: 2.5rem clamp(1.5rem, 4vw, 4rem);
+}
+
+.admin-main > .fade-in-up {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
 }
 
 /* --- Admin Page Header --- */
@@ -1112,8 +1119,9 @@ img {
 /* --- Admin Editor Layout --- */
 .admin-editor-layout {
   display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 2rem;
+  grid-template-columns: minmax(0, 760px) 300px;
+  justify-content: center;
+  gap: 1.75rem;
   align-items: start;
 }
 
@@ -1256,6 +1264,7 @@ img {
 
   .admin-main {
     margin-left: 200px;
+    width: calc(100% - 200px);
     padding: 1.5rem 1.2rem;
   }
 }
@@ -1322,6 +1331,7 @@ img {
 
   .admin-main {
     margin-left: 0;
+    width: 100%;
     padding: 1.2rem 1rem;
   }
 }
