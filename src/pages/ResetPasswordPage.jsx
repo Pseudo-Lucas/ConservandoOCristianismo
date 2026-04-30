@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/authContextValue'
+import { supabase } from '../lib/supabaseClient'
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate()
@@ -9,6 +10,41 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [sessionReady, setSessionReady] = useState(false)
+
+  useEffect(() => {
+    async function prepareRecoverySession() {
+      if (!supabase) {
+        setError('Supabase nao configurado.')
+        return
+      }
+
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+      const accessToken = hashParams.get('access_token')
+      const refreshToken = hashParams.get('refresh_token')
+
+      if (!accessToken || !refreshToken) {
+        const { data } = await supabase.auth.getSession()
+        setSessionReady(Boolean(data.session))
+        return
+      }
+
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      })
+
+      if (sessionError) {
+        setError(sessionError.message)
+        return
+      }
+
+      window.history.replaceState(null, '', '/reset-password')
+      setSessionReady(true)
+    }
+
+    prepareRecoverySession()
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -21,6 +57,11 @@ export default function ResetPasswordPage() {
 
     if (password !== confirmPassword) {
       setError('As senhas nao conferem.')
+      return
+    }
+
+    if (!sessionReady) {
+      setError('Sessao de recuperacao ainda nao carregada. Abra novamente o link enviado pelo Supabase.')
       return
     }
 
