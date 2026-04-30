@@ -12,11 +12,13 @@ model User {
   id           String   @id @default(cuid())
   email        String   @unique
   name         String?
-  passwordHash String
+  passwordHash String   @map("password_hash")
   role         String   @default("editor")
   active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
 }
 
 model Article {
@@ -29,9 +31,11 @@ model Article {
   excerpt   String?
   content   String
   status    String   @default("draft")
-  imageUrl  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  imageUrl  String?  @map("image_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("articles")
 }
 
 model Recommendation {
@@ -39,21 +43,25 @@ model Recommendation {
   title        String
   author       String
   description  String?
-  imageUrl     String?
-  externalLink String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  imageUrl     String?  @map("image_url")
+  externalLink String?  @map("external_link")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("recommendations")
 }
 
 model Download {
   id          String   @id @default(cuid())
   name        String
   description String
-  fileUrl     String?
+  fileUrl     String?  @map("file_url")
   category    String   @default("Geral")
   published   Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("downloads")
 }
 
 model ContactMessage {
@@ -62,5 +70,7 @@ model ContactMessage {
   email     String
   subject   String
   message   String
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("contact_messages")
 }
