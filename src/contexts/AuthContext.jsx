@@ -48,7 +48,17 @@ export function AuthProvider({ children }) {
     })
 
     if (error) {
-      throw new Error('Credenciais invalidas.')
+      const message = error.message?.toLowerCase() || ''
+
+      if (message.includes('email not confirmed')) {
+        throw new Error('E-mail ainda nao confirmado no Supabase.')
+      }
+
+      if (message.includes('invalid login credentials')) {
+        throw new Error('E-mail ou senha incorretos.')
+      }
+
+      throw new Error(error.message)
     }
 
     const sessionUser = userFromSession(data.session)
