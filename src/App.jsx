@@ -33,6 +33,19 @@ function ScrollToTop() {
   return null
 }
 
+function RecoveryRedirect() {
+  useEffect(() => {
+    const hash = window.location.hash
+    const isRecoveryLink = hash.includes('access_token=') && hash.includes('type=recovery')
+
+    if (isRecoveryLink && window.location.pathname !== '/reset-password') {
+      window.location.replace(`/reset-password${hash}`)
+    }
+  }, [])
+
+  return null
+}
+
 function PublicLayout() {
   return (
     <div className="page-wrapper">
@@ -58,6 +71,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <RecoveryRedirect />
         <ScrollToTop />
         <Routes>
           {/* Login */}
