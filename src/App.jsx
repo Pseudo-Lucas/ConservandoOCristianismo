@@ -36,9 +36,9 @@ function ScrollToTop() {
 function RecoveryRedirect() {
   useEffect(() => {
     const hash = window.location.hash
-    const isRecoveryLink = hash.includes('access_token=') && hash.includes('type=recovery')
+    const isAuthLink = hash.includes('access_token=')
 
-    if (isRecoveryLink && window.location.pathname !== '/reset-password') {
+    if (isAuthLink && window.location.pathname !== '/reset-password') {
       window.location.replace(`/reset-password${hash}`)
     }
   }, [])
