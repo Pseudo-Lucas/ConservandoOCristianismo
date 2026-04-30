@@ -9,7 +9,7 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
+  id           String   @id @default(uuid()) @db.Uuid
   email        String   @unique
   name         String?
   passwordHash String   @map("password_hash")
@@ -22,7 +22,7 @@ model User {
 }
 
 model Article {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid()) @db.Uuid
   slug      String   @unique
   title     String
   date      String?
@@ -39,7 +39,7 @@ model Article {
 }
 
 model Recommendation {
-  id           String   @id @default(cuid())
+  id           String   @id @default(uuid()) @db.Uuid
   title        String
   author       String
   description  String?
@@ -52,7 +52,7 @@ model Recommendation {
 }
 
 model Download {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid()) @db.Uuid
   name        String
   description String
   fileUrl     String?  @map("file_url")
@@ -65,7 +65,7 @@ model Download {
 }
 
 model ContactMessage {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid()) @db.Uuid
   name      String
   email     String
   subject   String
