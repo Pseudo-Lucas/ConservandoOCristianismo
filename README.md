@@ -1,16 +1,51 @@
-# React + Vite
+# Conservando o Cristianismo
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Site e painel editorial em Next.js, com backend proprio no mesmo projeto.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Next.js
+- PostgreSQL
+- Prisma
+- Auth propria com senha hash e cookie httpOnly
+- Vercel ou qualquer host Node compativel
 
-## React Compiler
+## Variaveis de ambiente
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Crie um `.env` local e configure as mesmas variaveis na Vercel:
 
-## Expanding the ESLint configuration
+```env
+DATABASE_URL="postgresql://usuario:senha@host:5432/conservando"
+SESSION_SECRET="troque-por-uma-frase-longa-e-aleatoria"
+ADMIN_EMAIL="lucasg627@gmail.com"
+ADMIN_PASSWORD="troque-esta-senha"
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Banco
+
+Depois de configurar `DATABASE_URL`:
+
+```powershell
+npm run db:push
+npm run db:seed
+```
+
+O seed cria o primeiro usuario editor usando `ADMIN_EMAIL` e `ADMIN_PASSWORD`.
+
+## Desenvolvimento
+
+```powershell
+npm install
+npm run dev
+```
+
+## Deploy
+
+Na Vercel, configure:
+
+- `DATABASE_URL`
+- `SESSION_SECRET`
+- `ADMIN_EMAIL`
+- `ADMIN_PASSWORD`
+
+Depois rode o deploy normalmente. O build executa `prisma generate && next build`.

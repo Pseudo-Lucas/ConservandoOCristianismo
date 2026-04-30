@@ -1,3 +1,5 @@
+'use client'
+
 export default function DownloadCard({ item }) {
   const handleDownload = () => {
     if (item.fileUrl) {
