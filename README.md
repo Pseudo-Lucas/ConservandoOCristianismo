@@ -44,6 +44,7 @@ npm run dev
 Na Vercel, configure:
 
 - `DATABASE_URL`
+- `DIRECT_URL`
 - `SESSION_SECRET`
 - `ADMIN_EMAIL`
 - `ADMIN_PASSWORD`
