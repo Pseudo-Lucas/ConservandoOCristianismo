@@ -1,185 +1,195 @@
+'use client'
+
 import { useCallback, useRef, useState } from 'react'
 
-export default function AdminRichTextEditor({ initialContent = '', onChange }) {
+function cleanHtml(html) {
+  const template = document.createElement('template')
+  template.innerHTML = html
+  template.content.querySelectorAll('script, iframe, object, embed').forEach((node) => node.remove())
+  template.content.querySelectorAll('*').forEach((node) => {
+    for (const attr of [...node.attributes]) {
+      if (attr.name.startsWith('on')) node.removeAttribute(attr.name)
+    }
+  })
+  return template.innerHTML
+}
+
+export default function AdminRichTextEditor({ name = 'content', initialContent = '' }) {
   const editorRef = useRef(null)
-  const [showPreview, setShowPreview] = useState(false)
-  const [previewHtml, setPreviewHtml] = useState('')
+  const hiddenInputRef = useRef(null)
+  const selectedImageRef = useRef(null)
+  const [hasSelectedImage, setHasSelectedImage] = useState(false)
 
-  const triggerChange = useCallback(() => {
-    if (onChange && editorRef.current) {
-      onChange(editorRef.current.innerHTML)
+  const syncContent = useCallback(() => {
+    if (hiddenInputRef.current && editorRef.current) {
+      hiddenInputRef.current.value = editorRef.current.innerHTML
     }
-  }, [onChange])
+  }, [])
 
-  const execCmd = useCallback((command, value = null) => {
-    document.execCommand(command, false, value)
+  const focusEditor = () => {
     editorRef.current?.focus()
-    triggerChange()
-  }, [triggerChange])
-
-  const handleInsertLink = () => {
-    const url = prompt('URL do link:')
-    if (url) execCmd('createLink', url)
   }
 
-  const handleInsertImage = () => {
-    const url = prompt('URL da imagem:')
-    if (url) execCmd('insertImage', url)
+  const execCmd = (command, value = null) => {
+    focusEditor()
+    document.execCommand(command, false, value)
+    syncContent()
   }
 
-  const handleHeading = (tag) => {
-    execCmd('formatBlock', tag)
+  const insertHtml = (html) => {
+    focusEditor()
+    document.execCommand('insertHTML', false, html)
+    syncContent()
   }
 
-  const handleCodeBlock = () => {
-    const selection = window.getSelection()
-    if (selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0)
-      const pre = document.createElement('pre')
-      const code = document.createElement('code')
-      code.textContent = selection.toString()
-      pre.appendChild(code)
-      range.deleteContents()
-      range.insertNode(pre)
-      triggerChange()
+  const insertImage = (src) => {
+    insertHtml(`<img src="${src}" alt="" style="max-width:100%;height:auto;" />`)
+  }
+
+  const handlePaste = (event) => {
+    const imageItem = [...event.clipboardData.items].find((item) => item.type.startsWith('image/'))
+
+    if (imageItem) {
+      event.preventDefault()
+      const file = imageItem.getAsFile()
+      const reader = new FileReader()
+      reader.onload = () => insertImage(reader.result)
+      reader.readAsDataURL(file)
+      return
+    }
+
+    const html = event.clipboardData.getData('text/html')
+    if (html) {
+      event.preventDefault()
+      insertHtml(cleanHtml(html))
     }
   }
 
-  const togglePreview = () => {
-    if (!showPreview) {
-      setPreviewHtml(editorRef.current?.innerHTML || '')
+  const handleEditorClick = (event) => {
+    if (event.target?.tagName === 'IMG') {
+      selectedImageRef.current = event.target
+      setHasSelectedImage(true)
+      return
     }
-    setShowPreview(!showPreview)
+    selectedImageRef.current = null
+    setHasSelectedImage(false)
   }
 
-  const toolbarGroups = [
-    {
-      label: 'Histórico',
-      buttons: [
-        { label: '↩', command: 'undo', title: 'Desfazer' },
-        { label: '↪', command: 'redo', title: 'Refazer' },
-      ],
-    },
-    {
-      label: 'Texto',
-      buttons: [
-        { label: 'B', command: 'bold', title: 'Negrito', style: { fontWeight: 'bold' } },
-        { label: 'I', command: 'italic', title: 'Itálico', style: { fontStyle: 'italic' } },
-        { label: 'U', command: 'underline', title: 'Sublinhado', style: { textDecoration: 'underline' } },
-        { label: 'S', command: 'strikeThrough', title: 'Riscado', style: { textDecoration: 'line-through' } },
-      ],
-    },
-    {
-      label: 'Blocos',
-      buttons: [
-        { label: 'H2', command: 'heading', value: 'h2', title: 'Título 2' },
-        { label: 'H3', command: 'heading', value: 'h3', title: 'Título 3' },
-        { label: 'H4', command: 'heading', value: 'h4', title: 'Título 4' },
-        { label: '¶', command: 'formatBlock', value: 'p', title: 'Parágrafo' },
-        { label: '❝', command: 'formatBlock', value: 'blockquote', title: 'Citação' },
-        { label: '</>', command: 'codeBlock', title: 'Bloco de código' },
-      ],
-    },
-    {
-      label: 'Listas',
-      buttons: [
-        { label: '• Lista', command: 'insertUnorderedList', title: 'Lista com marcadores' },
-        { label: '1. Lista', command: 'insertOrderedList', title: 'Lista numerada' },
-      ],
-    },
-    {
-      label: 'Alinhamento',
-      buttons: [
-        { label: '⫷', command: 'justifyLeft', title: 'Alinhar à esquerda' },
-        { label: '⫿', command: 'justifyCenter', title: 'Centralizar' },
-        { label: '⫸', command: 'justifyRight', title: 'Alinhar à direita' },
-      ],
-    },
-    {
-      label: 'Inserir',
-      buttons: [
-        { label: 'Link', command: 'link', title: 'Inserir link' },
-        { label: 'Imagem', command: 'image', title: 'Inserir imagem por URL' },
-      ],
-    },
-    {
-      label: 'Limpar',
-      buttons: [
-        { label: 'Limpar', command: 'removeFormat', title: 'Limpar formatação' },
-      ],
-    },
+  const setImageWidth = (width) => {
+    const image = selectedImageRef.current
+    if (!image) return
+    image.style.width = width
+    image.style.height = 'auto'
+    image.style.maxWidth = '100%'
+    syncContent()
+  }
+
+  const setImageAlign = (align) => {
+    const image = selectedImageRef.current
+    if (!image) return
+    image.style.display = 'block'
+    image.style.marginLeft = align === 'center' || align === 'right' ? 'auto' : '0'
+    image.style.marginRight = align === 'center' || align === 'left' ? 'auto' : '0'
+    syncContent()
+  }
+
+  const handleToolbarMouseDown = (event, action) => {
+    event.preventDefault()
+    action()
+  }
+
+  const groups = [
+    [
+      ['B', 'Negrito', 'bold'],
+      ['I', 'Italico', 'italic'],
+      ['U', 'Sublinhado', 'underline'],
+      ['S', 'Riscado', 'strikeThrough'],
+    ],
+    [
+      ['H2', 'Titulo 2', 'heading2'],
+      ['H3', 'Titulo 3', 'heading3'],
+      ['P', 'Paragrafo', 'paragraph'],
+      ['"', 'Citacao', 'quote'],
+    ],
+    [
+      ['•', 'Lista', 'insertUnorderedList'],
+      ['1.', 'Lista numerada', 'insertOrderedList'],
+      ['←', 'Alinhar esquerda', 'justifyLeft'],
+      ['↔', 'Centralizar', 'justifyCenter'],
+      ['→', 'Alinhar direita', 'justifyRight'],
+    ],
+    [
+      ['Link', 'Inserir link', 'link'],
+      ['Imagem', 'Inserir imagem por URL', 'image'],
+      ['Limpar', 'Limpar formatacao', 'removeFormat'],
+    ],
   ]
 
-  const handleToolbarClick = (btn) => {
-    if (btn.command === 'link') {
-      handleInsertLink()
-    } else if (btn.command === 'image') {
-      handleInsertImage()
-    } else if (btn.command === 'heading') {
-      handleHeading(btn.value)
-    } else if (btn.command === 'codeBlock') {
-      handleCodeBlock()
-    } else if (btn.command === 'formatBlock') {
-      execCmd('formatBlock', btn.value)
-    } else {
-      execCmd(btn.command, btn.value || null)
+  const runToolbarAction = (command) => {
+    if (command === 'heading2') return execCmd('formatBlock', 'h2')
+    if (command === 'heading3') return execCmd('formatBlock', 'h3')
+    if (command === 'paragraph') return execCmd('formatBlock', 'p')
+    if (command === 'quote') return execCmd('formatBlock', 'blockquote')
+    if (command === 'link') {
+      const url = window.prompt('URL do link:')
+      if (url) execCmd('createLink', url)
+      return undefined
     }
+    if (command === 'image') {
+      const url = window.prompt('URL da imagem:')
+      if (url) insertImage(url)
+      return undefined
+    }
+    return execCmd(command)
   }
 
   return (
     <div className="admin-rte-container">
-      <div className="admin-rte-toolbar">
-        {toolbarGroups.map((group, gi) => (
-          <div className="admin-rte-toolbar-group" key={gi}>
-            {group.buttons.map((btn) => (
+      <input ref={hiddenInputRef} type="hidden" name={name} defaultValue={initialContent} />
+
+      <div className="admin-rte-toolbar" aria-label="Ferramentas do editor">
+        {groups.map((group, index) => (
+          <div className="admin-rte-toolbar-group" key={index}>
+            {group.map(([label, title, action]) => (
               <button
-                key={btn.command + (btn.value || '')}
+                key={title}
                 type="button"
-                title={btn.title}
-                style={btn.style || {}}
-                onMouseDown={(e) => {
-                  e.preventDefault()
-                  handleToolbarClick(btn)
-                }}
+                title={title}
+                onMouseDown={(event) => handleToolbarMouseDown(event, () => runToolbarAction(action))}
               >
-                {btn.label}
+                {label}
               </button>
             ))}
           </div>
         ))}
-        <div className="admin-rte-toolbar-group" style={{ marginLeft: 'auto' }}>
-          <button
-            type="button"
-            title={showPreview ? 'Editar' : 'Pré-visualizar'}
-            className={showPreview ? 'active' : ''}
-            onMouseDown={(e) => {
-              e.preventDefault()
-              togglePreview()
-            }}
-          >
-            {showPreview ? '✎ Editar' : '👁 Preview'}
-          </button>
-        </div>
       </div>
 
-      {showPreview ? (
-        <div
-          className="admin-rte-preview article-body"
-          dangerouslySetInnerHTML={{ __html: previewHtml }}
-        />
-      ) : (
-        <div
-          className="admin-rte-editor"
-          ref={editorRef}
-          contentEditable
-          suppressContentEditableWarning
-          role="textbox"
-          aria-label="Conteúdo do artigo"
-          dangerouslySetInnerHTML={{ __html: initialContent }}
-          onInput={triggerChange}
-          onBlur={triggerChange}
-        />
+      {hasSelectedImage && (
+        <div className="admin-rte-image-tools">
+          <span>Imagem</span>
+          <button type="button" onMouseDown={(event) => handleToolbarMouseDown(event, () => setImageWidth('25%'))}>25%</button>
+          <button type="button" onMouseDown={(event) => handleToolbarMouseDown(event, () => setImageWidth('50%'))}>50%</button>
+          <button type="button" onMouseDown={(event) => handleToolbarMouseDown(event, () => setImageWidth('75%'))}>75%</button>
+          <button type="button" onMouseDown={(event) => handleToolbarMouseDown(event, () => setImageWidth('100%'))}>100%</button>
+          <button type="button" onMouseDown={(event) => handleToolbarMouseDown(event, () => setImageAlign('left'))}>Esq.</button>
+          <button type="button" onMouseDown={(event) => handleToolbarMouseDown(event, () => setImageAlign('center'))}>Centro</button>
+          <button type="button" onMouseDown={(event) => handleToolbarMouseDown(event, () => setImageAlign('right'))}>Dir.</button>
+        </div>
       )}
+
+      <div
+        ref={editorRef}
+        className="admin-rte-editor"
+        contentEditable
+        suppressContentEditableWarning
+        role="textbox"
+        aria-label="Conteudo do artigo"
+        dangerouslySetInnerHTML={{ __html: initialContent }}
+        onInput={syncContent}
+        onBlur={syncContent}
+        onPaste={handlePaste}
+        onClick={handleEditorClick}
+      />
     </div>
   )
 }

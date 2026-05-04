@@ -20,7 +20,7 @@ export default function Header() {
     <header className="site-header">
       <div className="container">
         <div className="logo-container">
-          <span className="logo-cross" aria-hidden="true">+</span>
+          <span className="logo-cross" aria-hidden="true">✝</span>
           <Link href="/" className="logo-text" style={{ textDecoration: 'none', color: 'inherit' }}>
             c o n s e r v a n d o &nbsp; o &nbsp; c r i s t i a n i s m o
           </Link>

@@ -20,7 +20,7 @@ export default async function AdminLayout({ children }) {
     <div className="admin-layout">
       <aside className="admin-sidebar">
         <div className="admin-sidebar-header">
-          <span className="admin-logo-cross" aria-hidden="true">+</span>
+          <span className="admin-logo-cross" aria-hidden="true">✝</span>
           <span className="admin-logo-text">Editor</span>
         </div>
 

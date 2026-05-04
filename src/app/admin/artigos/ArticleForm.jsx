@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import AdminRichTextEditor from '../../../components/AdminRichTextEditor'
 import { saveArticle } from '../../actions'
 
 export default function ArticleForm({ article }) {
@@ -22,14 +23,7 @@ export default function ArticleForm({ article }) {
           </div>
           <div className="admin-field">
             <label htmlFor="article-content">Conteudo</label>
-            <textarea
-              id="article-content"
-              name="content"
-              defaultValue={article?.content || ''}
-              rows={18}
-              className="admin-rte-editor"
-              required
-            />
+            <AdminRichTextEditor name="content" initialContent={article?.content || ''} />
           </div>
         </div>
 

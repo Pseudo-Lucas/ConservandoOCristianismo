@@ -5,7 +5,7 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-box fade-in-up">
         <div className="login-header">
-          <span className="login-cross" aria-hidden="true">+</span>
+          <span className="login-cross" aria-hidden="true">✝</span>
           <h1>Editor</h1>
           <p>Acesso restrito a area editorial</p>
         </div>
