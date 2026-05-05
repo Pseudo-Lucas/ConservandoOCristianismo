@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import AdminSidebarToggle from '../../components/AdminSidebarToggle'
 import { requireEditor } from '../../lib/auth'
 import { logoutAction } from '../actions'
 
@@ -18,10 +19,7 @@ export default async function AdminLayout({ children }) {
 
   return (
     <div className="admin-layout">
-      <input id="admin-sidebar-toggle" className="admin-sidebar-toggle" type="checkbox" aria-label="Alternar menu lateral" />
-      <label className="admin-sidebar-toggle-btn" htmlFor="admin-sidebar-toggle" title="Abrir/fechar menu">
-        Menu
-      </label>
+      <AdminSidebarToggle />
 
       <aside className="admin-sidebar">
         <div className="admin-sidebar-header">
