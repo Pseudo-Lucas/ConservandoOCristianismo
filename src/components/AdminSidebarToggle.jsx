@@ -23,7 +23,6 @@ export default function AdminSidebarToggle() {
       onClick={() => setCollapsed((current) => !current)}
     >
       <span aria-hidden="true">{collapsed ? '>' : '<'}</span>
-      <span className="sr-only">{collapsed ? 'Abrir menu' : 'Fechar menu'}</span>
     </button>
   )
 }
