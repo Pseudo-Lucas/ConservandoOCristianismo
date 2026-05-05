@@ -18,9 +18,14 @@ export default async function AdminLayout({ children }) {
 
   return (
     <div className="admin-layout">
+      <input id="admin-sidebar-toggle" className="admin-sidebar-toggle" type="checkbox" aria-label="Alternar menu lateral" />
+      <label className="admin-sidebar-toggle-btn" htmlFor="admin-sidebar-toggle" title="Abrir/fechar menu">
+        Menu
+      </label>
+
       <aside className="admin-sidebar">
         <div className="admin-sidebar-header">
-          <span className="admin-logo-cross" aria-hidden="true">✝</span>
+          <span className="admin-logo-cross" aria-hidden="true">&#10013;</span>
           <span className="admin-logo-text">Editor</span>
         </div>
 
