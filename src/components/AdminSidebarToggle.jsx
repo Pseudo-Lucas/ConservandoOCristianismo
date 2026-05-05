@@ -19,9 +19,11 @@ export default function AdminSidebarToggle() {
       type="button"
       className="admin-sidebar-toggle-btn"
       aria-expanded={!collapsed}
+      title={collapsed ? 'Abrir menu' : 'Fechar menu'}
       onClick={() => setCollapsed((current) => !current)}
     >
-      {collapsed ? 'Abrir menu' : 'Fechar menu'}
+      <span aria-hidden="true">{collapsed ? '>' : '<'}</span>
+      <span className="sr-only">{collapsed ? 'Abrir menu' : 'Fechar menu'}</span>
     </button>
   )
 }
