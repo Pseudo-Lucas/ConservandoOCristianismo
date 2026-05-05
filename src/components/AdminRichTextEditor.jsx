@@ -46,6 +46,12 @@ function cleanHtml(html) {
   const template = document.createElement('template')
   template.innerHTML = html
   template.content.querySelectorAll('script, iframe, object, embed').forEach((node) => node.remove())
+  template.content.querySelectorAll('a').forEach((node) => {
+    const image = node.querySelector('img')
+    if (image && node.textContent.trim() === '') {
+      node.replaceWith(image)
+    }
+  })
   template.content.querySelectorAll('*').forEach((node) => {
     for (const attr of [...node.attributes]) {
       if (attr.name.startsWith('on')) node.removeAttribute(attr.name)
@@ -129,8 +135,17 @@ export default function AdminRichTextEditor({ name = 'content', initialContent =
   }
 
   const handleEditorClick = (event) => {
-    if (event.target?.tagName === 'IMG') {
-      selectedImageRef.current = event.target
+    const target = event.target instanceof Element ? event.target : null
+    const image = target?.closest('img')
+    const link = target?.closest('a')
+
+    if (link) {
+      event.preventDefault()
+    }
+
+    if (image) {
+      event.preventDefault()
+      selectedImageRef.current = image
       setHasSelectedImage(true)
       return
     }
@@ -153,6 +168,21 @@ export default function AdminRichTextEditor({ name = 'content', initialContent =
     image.style.display = 'block'
     image.style.marginLeft = align === 'center' || align === 'right' ? 'auto' : '0'
     image.style.marginRight = align === 'center' || align === 'left' ? 'auto' : '0'
+    syncContent()
+  }
+
+  const setCustomImageWidth = () => {
+    const width = window.prompt('Largura da imagem. Ex: 420px, 60% ou auto')
+    if (!width) return
+    setImageWidth(width)
+  }
+
+  const removeImageLink = () => {
+    const image = selectedImageRef.current
+    const link = image?.closest('a')
+    if (!image || !link) return
+    link.replaceWith(image)
+    selectedImageRef.current = image
     syncContent()
   }
 
@@ -225,6 +255,7 @@ export default function AdminRichTextEditor({ name = 'content', initialContent =
     ['Esq', 'Alinhar esquerda', 'justifyLeft'],
     ['Centro', 'Centralizar', 'justifyCenter'],
     ['Dir', 'Alinhar direita', 'justifyRight'],
+    ['Just', 'Justificar', 'justifyFull'],
     ['Lista', 'Lista', 'insertUnorderedList'],
     ['1.', 'Lista numerada', 'insertOrderedList'],
     ['- recuo', 'Diminuir recuo', 'outdent'],
@@ -239,7 +270,7 @@ export default function AdminRichTextEditor({ name = 'content', initialContent =
       <input ref={hiddenInputRef} type="hidden" name={name} defaultValue={initialContent} />
 
       <div className="admin-rte-toolbar" aria-label="Ferramentas do editor">
-        <div className="admin-rte-toolbar-group">
+        <div className="admin-rte-toolbar-group admin-rte-select-group">
           <select
             aria-label="Fonte"
             defaultValue="Times New Roman"
@@ -272,7 +303,7 @@ export default function AdminRichTextEditor({ name = 'content', initialContent =
           </select>
         </div>
 
-        <div className="admin-rte-toolbar-group">
+        <div className="admin-rte-toolbar-group admin-rte-button-group">
           {buttons.map(([label, title, action]) => (
             <button
               key={`${title}-${action}`}
@@ -286,7 +317,7 @@ export default function AdminRichTextEditor({ name = 'content', initialContent =
           ))}
         </div>
 
-        <div className="admin-rte-toolbar-group">
+        <div className="admin-rte-toolbar-group admin-rte-color-group">
           <label className="admin-rte-color" title="Cor do texto">
             A
             <input type="color" list="text-colors" onChange={(event) => execCmd('foreColor', event.target.value)} disabled={sourceMode} />
@@ -311,9 +342,12 @@ export default function AdminRichTextEditor({ name = 'content', initialContent =
           <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageWidth('50%') }}>50%</button>
           <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageWidth('75%') }}>75%</button>
           <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageWidth('100%') }}>100%</button>
-          <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageAlign('left') }}>Esq.</button>
+          <button type="button" onMouseDown={(event) => { event.preventDefault(); setCustomImageWidth() }}>Largura</button>
+          <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageWidth('auto') }}>Original</button>
+          <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageAlign('left') }}>Esquerda</button>
           <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageAlign('center') }}>Centro</button>
-          <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageAlign('right') }}>Dir.</button>
+          <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageAlign('right') }}>Direita</button>
+          <button type="button" onMouseDown={(event) => { event.preventDefault(); removeImageLink() }}>Remover link</button>
           <button type="button" onMouseDown={(event) => { event.preventDefault(); removeSelectedImage() }}>Remover</button>
         </div>
       )}

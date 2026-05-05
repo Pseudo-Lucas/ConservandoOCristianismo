@@ -1165,25 +1165,37 @@ img {
 .admin-rte-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem;
-  padding: 0.55rem 0.65rem;
+  gap: 0.45rem;
+  padding: 0.7rem;
   border-bottom: 1px solid var(--color-border-light);
-  background: var(--color-bg-alt);
-  align-items: center;
+  background: #f8f8f4;
+  align-items: flex-start;
 }
 
 .admin-rte-toolbar-group {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 2px;
-  padding-right: 0.5rem;
-  margin-right: 0.3rem;
-  border-right: 1px solid var(--color-border-light);
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: #fff;
+  border: 1px solid var(--color-border-light);
 }
 
 .admin-rte-toolbar-group:last-child {
-  border-right: none;
+  border-right: 1px solid var(--color-border-light);
+}
+
+.admin-rte-select-group {
+  flex: 1 1 100%;
+}
+
+.admin-rte-button-group {
+  flex: 1 1 620px;
+}
+
+.admin-rte-color-group {
+  flex: 0 1 auto;
 }
 
 .admin-rte-toolbar button,
@@ -1192,7 +1204,7 @@ img {
   background: #fff;
   border: 1px solid var(--color-border-light);
   cursor: pointer;
-  padding: 0.35rem 0.55rem;
+  padding: 0.42rem 0.6rem;
   font-size: 0.8rem;
   color: var(--color-text-muted);
   font-family: var(--font-serif);
@@ -1203,7 +1215,8 @@ img {
 
 .admin-rte-toolbar select {
   min-height: 2rem;
-  min-width: 6rem;
+  min-width: 8rem;
+  flex: 1 1 12rem;
 }
 
 .admin-rte-toolbar button:hover,
@@ -1294,9 +1307,9 @@ img {
   align-items: center;
   flex-wrap: wrap;
   gap: 0.35rem;
-  padding: 0.45rem 0.65rem;
+  padding: 0.6rem 0.7rem;
   border-bottom: 1px solid var(--color-border-light);
-  background: rgba(123, 0, 9, 0.04);
+  background: #fff8f8;
 }
 
 .admin-rte-image-tools span {
@@ -1313,7 +1326,7 @@ img {
   color: var(--color-text-muted);
   font-family: var(--font-serif);
   font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
+  padding: 0.35rem 0.55rem;
   cursor: pointer;
 }
 
