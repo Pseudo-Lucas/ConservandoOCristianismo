@@ -32,6 +32,21 @@ export async function saveArticle(formData) {
   const title = String(formData.get('title') || '')
   const content = String(formData.get('content') || '')
   const status = String(formData.get('status') || 'draft')
+  const thumbnail = formData.get('thumbnail')
+  const existingImageUrl = String(formData.get('imageUrl') || '')
+  let imageUrl = existingImageUrl || null
+
+  if (thumbnail instanceof File && thumbnail.size > 0) {
+    if (!thumbnail.type.startsWith('image/')) {
+      throw new Error('Envie um arquivo de imagem para a thumbnail.')
+    }
+    if (thumbnail.size > 1_500_000) {
+      throw new Error('A thumbnail precisa ter ate 1.5MB.')
+    }
+
+    const buffer = Buffer.from(await thumbnail.arrayBuffer())
+    imageUrl = `data:${thumbnail.type};base64,${buffer.toString('base64')}`
+  }
 
   const data = {
     title,
@@ -39,7 +54,7 @@ export async function saveArticle(formData) {
     author: String(formData.get('author') || 'Lucas Gomes'),
     category: String(formData.get('category') || 'Teologia'),
     date: String(formData.get('date') || ''),
-    imageUrl: String(formData.get('imageUrl') || '') || null,
+    imageUrl,
     content,
     status,
     excerpt: String(formData.get('excerpt') || content.replace(/<[^>]*>/g, '').slice(0, 180)),

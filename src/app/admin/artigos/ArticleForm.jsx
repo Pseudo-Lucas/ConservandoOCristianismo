@@ -10,7 +10,7 @@ export default function ArticleForm({ article }) {
         <h1>{article ? 'Editar Artigo' : 'Novo Artigo'}</h1>
       </div>
 
-      <form action={saveArticle} className="admin-editor-layout">
+      <form action={saveArticle} className="admin-editor-layout" encType="multipart/form-data">
         <input type="hidden" name="id" value={article?.id || ''} />
         <div className="admin-editor-main">
           <div className="admin-field">
@@ -55,8 +55,12 @@ export default function ArticleForm({ article }) {
               <input id="article-date" name="date" defaultValue={article?.date || ''} />
             </div>
             <div className="admin-field">
-              <label htmlFor="article-image">Imagem (URL)</label>
-              <input id="article-image" name="imageUrl" defaultValue={article?.imageUrl || ''} />
+              <label htmlFor="article-thumbnail">Thumbnail</label>
+              {article?.imageUrl ? (
+                <img className="admin-thumbnail-preview" src={article.imageUrl} alt="" />
+              ) : null}
+              <input id="article-thumbnail" name="thumbnail" type="file" accept="image/*" />
+              <input name="imageUrl" type="hidden" defaultValue={article?.imageUrl || ''} />
             </div>
           </div>
         </div>

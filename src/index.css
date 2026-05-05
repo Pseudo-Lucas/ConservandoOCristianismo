@@ -257,6 +257,10 @@ img {
   border-bottom: 1px solid var(--color-border-light);
   padding: 1.5rem 0;
   transition: background-color var(--transition-fast);
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 1.4rem;
+  align-items: start;
 }
 
 .article-card:last-child {
@@ -265,6 +269,38 @@ img {
 
 .article-card:hover {
   background-color: rgba(123, 0, 9, 0.015);
+}
+
+.article-card:not(:has(.article-card-thumb)) {
+  display: block;
+}
+
+.article-card-thumb {
+  display: block;
+  width: 160px;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--color-border-light);
+  background: #fff;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.article-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: saturate(0.88);
+  transition: transform var(--transition-slow), filter var(--transition-fast);
+}
+
+.article-card:hover .article-card-thumb img {
+  transform: scale(1.03);
+  filter: saturate(1);
+}
+
+.article-card-content {
+  min-width: 0;
 }
 
 .article-card .card-category {
@@ -301,6 +337,18 @@ img {
   font-size: 0.95rem;
   color: var(--color-text-muted);
   line-height: 1.7;
+}
+
+@media (max-width: 640px) {
+  .article-card {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .article-card-thumb {
+    width: 100%;
+    max-width: 360px;
+  }
 }
 
 /* --- Book Card --- */
@@ -1220,6 +1268,16 @@ img {
 .admin-editor-sidebar .btn-classic-filled {
   padding: 0.55rem 0.85rem;
   font-size: 0.72rem;
+}
+
+.admin-thumbnail-preview {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border: 1px solid var(--color-border-light);
+  margin-bottom: 0.45rem;
+  background: var(--color-bg-alt);
 }
 
 /* --- Admin Rich Text Editor --- */
