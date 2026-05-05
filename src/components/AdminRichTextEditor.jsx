@@ -65,6 +65,7 @@ function cleanHtml(html) {
 
 export default function AdminRichTextEditor({ name = 'content', initialContent = '' }) {
   const editorRef = useRef(null)
+  const editorInitializedRef = useRef(false)
   const hiddenInputRef = useRef(null)
   const selectedImageRef = useRef(null)
   const [hasSelectedImage, setHasSelectedImage] = useState(false)
@@ -76,6 +77,14 @@ export default function AdminRichTextEditor({ name = 'content', initialContent =
     const html = sourceMode ? sourceHtml : editorRef.current?.innerHTML || ''
     hiddenInputRef.current.value = html
   }, [sourceHtml, sourceMode])
+
+  const setEditorNode = useCallback((node) => {
+    editorRef.current = node
+    if (node && !editorInitializedRef.current) {
+      node.innerHTML = initialContent
+      editorInitializedRef.current = true
+    }
+  }, [initialContent])
 
   const focusEditor = () => {
     editorRef.current?.focus()
@@ -145,10 +154,14 @@ export default function AdminRichTextEditor({ name = 'content', initialContent =
 
     if (image) {
       event.preventDefault()
+      selectedImageRef.current?.classList.remove('admin-rte-selected-image')
       selectedImageRef.current = image
+      image.classList.add('admin-rte-selected-image')
       setHasSelectedImage(true)
       return
     }
+    selectedImageRef.current?.classList.remove('admin-rte-selected-image')
+    syncContent()
     selectedImageRef.current = null
     setHasSelectedImage(false)
   }
@@ -156,7 +169,10 @@ export default function AdminRichTextEditor({ name = 'content', initialContent =
   const setImageWidth = (width) => {
     const image = selectedImageRef.current
     if (!image) return
-    image.style.width = width
+    image.removeAttribute('width')
+    image.removeAttribute('height')
+    image.setAttribute('data-admin-edited-image', 'true')
+    image.style.setProperty('width', width)
     image.style.height = 'auto'
     image.style.maxWidth = '100%'
     syncContent()
@@ -165,9 +181,14 @@ export default function AdminRichTextEditor({ name = 'content', initialContent =
   const setImageAlign = (align) => {
     const image = selectedImageRef.current
     if (!image) return
+    const block = image.closest('figure, div, p')
+    image.setAttribute('data-admin-edited-image', 'true')
     image.style.display = 'block'
     image.style.marginLeft = align === 'center' || align === 'right' ? 'auto' : '0'
     image.style.marginRight = align === 'center' || align === 'left' ? 'auto' : '0'
+    if (block && editorRef.current?.contains(block)) {
+      block.style.textAlign = align
+    }
     syncContent()
   }
 
@@ -361,13 +382,12 @@ export default function AdminRichTextEditor({ name = 'content', initialContent =
         />
       ) : (
         <div
-          ref={editorRef}
+          ref={setEditorNode}
           className="admin-rte-editor"
           contentEditable
           suppressContentEditableWarning
           role="textbox"
           aria-label="Conteudo do artigo"
-          dangerouslySetInnerHTML={{ __html: initialContent }}
           onInput={syncContent}
           onBlur={syncContent}
           onPaste={handlePaste}

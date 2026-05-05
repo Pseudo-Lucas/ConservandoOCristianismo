@@ -1361,6 +1361,11 @@ img {
   outline: 2px solid rgba(123, 0, 9, 0.25);
 }
 
+.admin-rte-editor img.admin-rte-selected-image {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .admin-rte-editor blockquote {
   border-left: 3px solid var(--color-primary);
   margin: 1rem 0;
