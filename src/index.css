@@ -1287,6 +1287,14 @@ img {
   background: #fff;
 }
 
+.admin-rte-sticky-tools {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #f8f8f4;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.04);
+}
+
 .admin-rte-toolbar {
   display: flex;
   flex-wrap: wrap;

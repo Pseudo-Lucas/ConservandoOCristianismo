@@ -290,88 +290,90 @@ export default function AdminRichTextEditor({ name = 'content', initialContent =
     <div className="admin-rte-container">
       <input ref={hiddenInputRef} type="hidden" name={name} defaultValue={initialContent} />
 
-      <div className="admin-rte-toolbar" aria-label="Ferramentas do editor">
-        <div className="admin-rte-toolbar-group admin-rte-select-group">
-          <select
-            aria-label="Fonte"
-            defaultValue="Times New Roman"
-            onChange={(event) => execCmd('fontName', event.target.value)}
-            disabled={sourceMode}
-          >
-            {fontFamilies.map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-          <select
-            aria-label="Tamanho"
-            defaultValue="3"
-            onChange={(event) => execCmd('fontSize', event.target.value)}
-            disabled={sourceMode}
-          >
-            {fontSizes.map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-          <select
-            aria-label="Formato"
-            defaultValue="p"
-            onChange={(event) => execCmd('formatBlock', event.target.value)}
-            disabled={sourceMode}
-          >
-            {blockFormats.map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="admin-rte-toolbar-group admin-rte-button-group">
-          {buttons.map(([label, title, action]) => (
-            <button
-              key={`${title}-${action}`}
-              type="button"
-              title={title}
-              className={action === 'html' && sourceMode ? 'active' : ''}
-              onMouseDown={(event) => handleMouseDown(event, action)}
+      <div className="admin-rte-sticky-tools">
+        <div className="admin-rte-toolbar" aria-label="Ferramentas do editor">
+          <div className="admin-rte-toolbar-group admin-rte-select-group">
+            <select
+              aria-label="Fonte"
+              defaultValue="Times New Roman"
+              onChange={(event) => execCmd('fontName', event.target.value)}
+              disabled={sourceMode}
             >
-              {label}
-            </button>
-          ))}
+              {fontFamilies.map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+            <select
+              aria-label="Tamanho"
+              defaultValue="3"
+              onChange={(event) => execCmd('fontSize', event.target.value)}
+              disabled={sourceMode}
+            >
+              {fontSizes.map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+            <select
+              aria-label="Formato"
+              defaultValue="p"
+              onChange={(event) => execCmd('formatBlock', event.target.value)}
+              disabled={sourceMode}
+            >
+              {blockFormats.map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="admin-rte-toolbar-group admin-rte-button-group">
+            {buttons.map(([label, title, action]) => (
+              <button
+                key={`${title}-${action}`}
+                type="button"
+                title={title}
+                className={action === 'html' && sourceMode ? 'active' : ''}
+                onMouseDown={(event) => handleMouseDown(event, action)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="admin-rte-toolbar-group admin-rte-color-group">
+            <label className="admin-rte-color" title="Cor do texto">
+              A
+              <input type="color" list="text-colors" onChange={(event) => execCmd('foreColor', event.target.value)} disabled={sourceMode} />
+            </label>
+            <label className="admin-rte-color" title="Cor de fundo">
+              Bg
+              <input type="color" list="bg-colors" onChange={(event) => execCmd('hiliteColor', event.target.value)} disabled={sourceMode} />
+            </label>
+            <datalist id="text-colors">
+              {textColors.map((color) => <option key={color} value={color} />)}
+            </datalist>
+            <datalist id="bg-colors">
+              {bgColors.map((color) => <option key={color} value={color} />)}
+            </datalist>
+          </div>
         </div>
 
-        <div className="admin-rte-toolbar-group admin-rte-color-group">
-          <label className="admin-rte-color" title="Cor do texto">
-            A
-            <input type="color" list="text-colors" onChange={(event) => execCmd('foreColor', event.target.value)} disabled={sourceMode} />
-          </label>
-          <label className="admin-rte-color" title="Cor de fundo">
-            Bg
-            <input type="color" list="bg-colors" onChange={(event) => execCmd('hiliteColor', event.target.value)} disabled={sourceMode} />
-          </label>
-          <datalist id="text-colors">
-            {textColors.map((color) => <option key={color} value={color} />)}
-          </datalist>
-          <datalist id="bg-colors">
-            {bgColors.map((color) => <option key={color} value={color} />)}
-          </datalist>
-        </div>
+        {hasSelectedImage && !sourceMode && (
+          <div className="admin-rte-image-tools">
+            <span>Imagem</span>
+            <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageWidth('25%') }}>25%</button>
+            <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageWidth('50%') }}>50%</button>
+            <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageWidth('75%') }}>75%</button>
+            <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageWidth('100%') }}>100%</button>
+            <button type="button" onMouseDown={(event) => { event.preventDefault(); setCustomImageWidth() }}>Largura</button>
+            <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageWidth('auto') }}>Original</button>
+            <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageAlign('left') }}>Esquerda</button>
+            <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageAlign('center') }}>Centro</button>
+            <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageAlign('right') }}>Direita</button>
+            <button type="button" onMouseDown={(event) => { event.preventDefault(); removeImageLink() }}>Remover link</button>
+            <button type="button" onMouseDown={(event) => { event.preventDefault(); removeSelectedImage() }}>Remover</button>
+          </div>
+        )}
       </div>
-
-      {hasSelectedImage && !sourceMode && (
-        <div className="admin-rte-image-tools">
-          <span>Imagem</span>
-          <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageWidth('25%') }}>25%</button>
-          <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageWidth('50%') }}>50%</button>
-          <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageWidth('75%') }}>75%</button>
-          <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageWidth('100%') }}>100%</button>
-          <button type="button" onMouseDown={(event) => { event.preventDefault(); setCustomImageWidth() }}>Largura</button>
-          <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageWidth('auto') }}>Original</button>
-          <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageAlign('left') }}>Esquerda</button>
-          <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageAlign('center') }}>Centro</button>
-          <button type="button" onMouseDown={(event) => { event.preventDefault(); setImageAlign('right') }}>Direita</button>
-          <button type="button" onMouseDown={(event) => { event.preventDefault(); removeImageLink() }}>Remover link</button>
-          <button type="button" onMouseDown={(event) => { event.preventDefault(); removeSelectedImage() }}>Remover</button>
-        </div>
-      )}
 
       {sourceMode ? (
         <textarea
